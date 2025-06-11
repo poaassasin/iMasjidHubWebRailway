@@ -7,12 +7,16 @@ use Illuminate\Http\Request;
 
 class CheckRole
 {
-    public function handle(Request $request, Closure $next, ...$roles)
+    public function handle(Request $request, Closure $next, $role)
     {
-        $user = $request->user(); // atau custom: User::find(token dst)
+        $user = $request->attributes->get('auth_user');
 
-        if (!$user || !in_array($user->role, $roles)) {
-            return response()->json(['message' => 'Akses ditolak.'], 403);
+        if (!$user) {
+            return response()->json(['message' => 'User tidak ditemukan di request.'], 401);
+        }
+
+        if ($user->role !== $role) {
+            return response()->json(['message' => 'Akses ditolak, bukan role: ' . $role], 403);
         }
 
         return $next($request);

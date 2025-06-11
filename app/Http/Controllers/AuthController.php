@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
 use App\Models\User;
+use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Str;
 
@@ -60,18 +61,29 @@ class AuthController extends Controller
         $user = User::where('email', $request->email)->first();
 
         if (!$user || !Hash::check($request->password, $user->password)) {
-            return response()->json(['message' => 'Invalid credentials'], 401);
+            return response()->json(['message' => 'Kredensial tidak valid'], 401);
         }
 
-        $user->api_token = Str::random(60);
-        $user->save();
+        // --- INI ADALAH JEMBATANNYA ---
+        // Membuat session otentikasi untuk web setelah validasi berhasil.
+        Auth::login($user);
 
-        return response()->json([
-            'message' => 'Login successful',
-            'user'    => $user->makeHidden(['password', 'remember_token']),
-            'token'   => $user->api_token,
-        ]);
+        // Regenerasi session untuk keamanan
+        $request->session()->regenerate();
+
+        return response()->json(['message' => 'Login berhasil. Mengarahkan...']);
     }
+
+    public function logout(Request $request)
+    {
+        Auth::logout();
+
+        $request->session()->invalidate();
+        $request->session()->regenerateToken();
+
+        return redirect('/login');
+    }
+    
     public function adminOnly(Request $request)
     {
         $token = $request->bearerToken();

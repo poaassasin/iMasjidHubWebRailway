@@ -4,7 +4,7 @@
         <meta charset="utf-8">
         <meta name="viewport" content="width=device-width, initial-scale=1">
 
-        <title>Login</title>
+        <title>Tambah Keluar Masuk</title>
 
         <!-- Fonts -->
         <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -12,9 +12,11 @@
 
         @vite(['resources/js/app.js', 'resources/css/app.css'])
     </head>
-    <body>
+    <body class="font-sans antialiased bg-gray-900 overflow-hidden">
         <div id="app">
-            <login-component></login-component>
+            <tbhkeluarmasuk-component 
+            current-path="/{{ request()->path() }}">
+            </tbhkeluarmasuk-component>
         </div>
     </body>
 </html>

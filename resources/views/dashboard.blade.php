@@ -3,8 +3,8 @@
     <head>
         <meta charset="utf-8">
         <meta name="viewport" content="width=device-width, initial-scale=1">
-
-        <title>Login</title>
+        <meta name="csrf-token" content="{{ csrf_token() }}">
+        <title>Dashboard</title>
 
         <!-- Fonts -->
         <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -12,9 +12,11 @@
 
         @vite(['resources/js/app.js', 'resources/css/app.css'])
     </head>
-    <body>
+    <body class="font-sans antialiased bg-gray-900 overflow-hidden">
         <div id="app">
-            <login-component></login-component>
+            <dashboard-component 
+            current-path="/{{ request()->path() }}">
+            </dashboard-component>
         </div>
     </body>
 </html>
