@@ -16,7 +16,7 @@ if (token) {
 }
 
 // 4. Atur base URL agar lebih ringkas saat memanggil API
-axios.defaults.baseURL = 'http://127.0.0.1:8000';
+axios.defaults.baseURL = 'https://imasjidhub.up.railway.app';
 
 // =======================================================
 // === AKHIR DARI KONFIGURASI AXIOS ===
