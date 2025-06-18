@@ -53,35 +53,49 @@ class AuthController extends Controller
 
     public function login(Request $request)
     {
+        // 1. Validasi input
         $request->validate([
             'email'    => 'required|email',
             'password' => 'required',
         ]);
 
+        // 2. Cari user berdasarkan email
         $user = User::where('email', $request->email)->first();
 
+        // 3. Cek apakah user ada dan passwordnya cocok
         if (!$user || !Hash::check($request->password, $user->password)) {
+            // Jika kredensial tidak cocok, kembalikan error 401
             return response()->json(['message' => 'Kredensial tidak valid'], 401);
         }
 
-        // --- INI ADALAH JEMBATANNYA ---
-        // Membuat session otentikasi untuk web setelah validasi berhasil.
-        Auth::login($user);
+        // 4. Jika berhasil, ambil 'api_token' yang SUDAH ADA di database
+        $token = $user->api_token;
 
-        // Regenerasi session untuk keamanan
-        $request->session()->regenerate();
+        // Untuk keamanan, buat token baru setiap kali login berhasil
+        $token = Str::random(60);
+        $user->api_token = $token;
+        $user->save();
 
-        return response()->json(['message' => 'Login berhasil. Mengarahkan...']);
+        // 5. Kembalikan response sukses yang berisi token
+        return response()->json([
+            'message' => 'Login Berhasil',
+            'user'    => $user->makeHidden(['password', 'remember_token']),
+            'token'   => $token,
+        ], 200);
     }
 
     public function logout(Request $request)
     {
-        Auth::logout();
+        // Dapatkan user yang sedang login berdasarkan token yang dikirim
+        $user = $request->auth_user; // Ini tergantung middleware 'AuthToken' Anda
 
-        $request->session()->invalidate();
-        $request->session()->regenerateToken();
+        if ($user) {
+            // Buat token lama tidak valid dengan menimpa-nya dengan yang baru.
+            $user->api_token = Str::random(60);
+            $user->save();
+        }
 
-        return redirect('/login');
+        return response()->json(['message' => 'Logout berhasil']);
     }
     
     public function adminOnly(Request $request)

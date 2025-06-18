@@ -26,7 +26,7 @@
           <h2>Selamat Datang, Zulfikar</h2>
           <small>Admin, Masjid Al-Waqar</small>
         </div>
-        <div class="date">Selasa, 31 Desember 2024</div>
+        <div class="date">{{ tanggalHariIni }}</div>
       </div>
 
       <section class="inventaris">
@@ -58,7 +58,7 @@
       </section>
 
       <section class="jadwal">
-        <h3>Jadwal Sholat dan Imam</h3>6yhh
+        <h3>Jadwal Sholat dan Imam</h3>
         <ul>
           <li v-for="(j, i) in jadwalSholat" :key="i">
             <span class="icon">{{ j.icon }}</span>
@@ -102,7 +102,10 @@
 
 <script>
 import axios from 'axios';
+import authMixin from '../mixins/auth';
+
 export default {
+  mixins: [authMixin],
   props: {
         currentPath: {
           type: String,
@@ -119,44 +122,98 @@ export default {
         { icon: "💺", label: "Inventaris Acara", jumlah: 21 },
       ],
       jadwalSholat: [
-        { icon: "🌤️", nama: "Subuh", jam: "04.14", imam: "Ust. Zulfikar" },
-        { icon: "☀️", nama: "Dzuhur", jam: "11.59", imam: "Ust. Jalaluddin" },
-        { icon: "🌥️", nama: "Ashar", jam: "14.50", imam: "Ust. Jalaluddin" },
-        { icon: "🌇", nama: "Maghrib", jam: "17.22", imam: "Ust. Jalaluddin" },
-        { icon: "🌙", nama: "Isya", jam: "18.34", imam: "Ust. Jalaluddin" },
+        { icon: "🌤️", nama: "Subuh", jam: "...", imam: "..." },
+        { icon: "☀️", nama: "Dzuhur", jam: "...", imam: "..." },
+        { icon: "🌥️", nama: "Ashar", jam: "...", imam: "..." },
+        { icon: "🌇", nama: "Maghrib", jam: "...", imam: "..." },
+        { icon: "🌙", nama: "Isya", jam: "...", imam: "..." },
       ],
+      loading: true,
+      error: null,
+      tanggalHariIni: 'Memuat tanggal...',
     };
   },
   created() {
-    // Load jadwal sholat from localStorage if exists
-    const savedJadwal = localStorage.getItem('jadwalSholat')
-    if (savedJadwal) {
-      this.jadwalSholat = JSON.parse(savedJadwal)
-    } else {
-      // If no saved data, save current data to localStorage
-      localStorage.setItem('jadwalSholat', JSON.stringify(this.jadwalSholat))
-    }
+    this.fetchDashboardData();
   },
-  methods: {
-    refreshDashboard() {
-      window.location.reload();
-    },
-    updateJadwalSholat(index, updatedJadwal) {
-      this.jadwalSholat[index] = updatedJadwal;
-      localStorage.setItem('jadwalSholat', JSON.stringify(this.jadwalSholat));
-    },
-    async logout() {
-            try {
-                // Kirim request POST ke rute logout
-                await axios.post('/logout');
 
-                // Jika berhasil, redirect ke halaman login
-                window.location.href = '/login';
-            } catch (error) {
-                console.error('Logout gagal:', error);
-                alert('Gagal untuk logout. Silakan coba lagi.');
-            }
+  methods: {
+    async fetchDashboardData() {
+      this.loading = true;
+      this.error = null;
+      try {
+        // Panggil API lokal Anda
+        const response = await axios.get('/api/dashboard');
+        const dataFromDb = response.data;
+
+        console.log('Data diterima dari backend:', dataFromDb);
+
+        this.tanggalHariIni = dataFromDb.tanggal_hari_ini;
+
+        // Update jadwal sholat dengan data dari database
+        if (dataFromDb.jadwal_sholat && dataFromDb.jadwal_sholat.length > 0) {
+          this.updateJadwalSholat(dataFromDb.jadwal_sholat);
         }
+
+        // Anda juga bisa update data lain di sini jika perlu
+        // Contoh: this.inventaris = dataFromDb.kategori_inventaris;
+        
+      } catch (err) {
+        this.error = "Gagal memuat data dashboard.";
+        console.error("Error fetching dashboard data:", err);
+      } finally {
+        this.loading = false;
+      }
+    },
+
+    updateJadwalSholat(jadwalFromDb) {
+      this.jadwalSholat.forEach(itemDiTemplate => {
+        const dataCocok = jadwalFromDb.find(dbItem => dbItem.waktu_shalat === itemDiTemplate.nama);
+        
+        if (dataCocok) {
+          // (Untuk Debugging) Cek data yang cocok
+          console.log(`Mencocokkan: ${itemDiTemplate.nama} -> Ditemukan:`, dataCocok);
+
+          itemDiTemplate.jam = dataCocok.jam.substring(0, 5);
+          
+          // PERBAIKAN: Hanya update imam jika datanya ada (tidak null)
+          // Jika data imam dari DB null, placeholder "..." akan tetap ditampilkan.
+          if (dataCocok.imam) {
+            itemDiTemplate.imam = dataCocok.imam;
+          }
+        }
+      });
+    },
+    
+    refreshDashboard() {
+      this.fetchDashboardData();
+    },
+
+    async logout() {
+      try {
+        // Langkah 1 (Direkomendasikan): Beritahu server untuk membuat token tidak valid.
+        // Permintaan ini akan tetap dikirim dengan token yang ada karena pengaturan global Axios.
+        await axios.post('/api/logout');
+        console.log("Berhasil logout dari server.");
+
+      } catch (error) {
+        // Jika gagal (misal: internet putus), tidak apa-apa.
+        // Yang terpenting adalah proses logout di sisi browser tetap berjalan.
+        console.error('Gagal menghubungi server untuk logout, tapi tetap lanjut:', error);
+
+      } finally {
+        // Langkah 2 (WAJIB): Hapus token dari penyimpanan browser.
+        localStorage.removeItem('auth_token');
+        console.log("Token telah dihapus dari localStorage.");
+
+        // Langkah 3 (WAJIB): Hapus header default dari Axios untuk sesi ini.
+        delete axios.defaults.headers.common['Authorization'];
+        console.log("Header Authorization telah dihapus dari Axios.");
+
+        // Langkah 4 (WAJIB): Arahkan pengguna ke halaman login.
+        window.location.href = '/login';
+      }
+    }
   }
 };
 </script>

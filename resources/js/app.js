@@ -1,5 +1,27 @@
 import './bootstrap';
 import { createApp } from 'vue';
+import axios from 'axios'; // 1. PASTIKAN AXIOS DI-IMPORT
+
+// =======================================================
+// === KONFIGURASI AXIOS GLOBAL DITEMPATKAN DI SINI ===
+// =======================================================
+
+// 2. Ambil token dari localStorage saat aplikasi dimuat.
+//    Ganti 'auth_token' jika Anda menggunakan nama kunci yang berbeda.
+const token = localStorage.getItem('auth_token');
+
+// 3. Jika token ada, atur sebagai header default untuk semua permintaan Axios.
+if (token) {
+  axios.defaults.headers.common['Authorization'] = `Bearer ${token}`;
+}
+
+// 4. Atur base URL agar lebih ringkas saat memanggil API
+axios.defaults.baseURL = 'http://127.0.0.1:8000';
+
+// =======================================================
+// === AKHIR DARI KONFIGURASI AXIOS ===
+// =======================================================
+
 
 const app = createApp({});
 

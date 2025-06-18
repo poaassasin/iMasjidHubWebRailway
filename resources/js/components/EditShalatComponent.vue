@@ -54,7 +54,10 @@
   </template>
   
   <script>
+  import authMixin from '../mixins/auth';
+
   export default {
+    mixins: [authMixin],
     name: 'EditJadwalImam',
     data() {
       return {

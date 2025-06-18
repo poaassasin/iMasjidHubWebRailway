@@ -36,8 +36,9 @@ Route::get('/auth/callback/google', [GoogleController::class, 'callback']);
 
 // === DASHBOARD ADMIN ===
 Route::middleware([AuthToken::class, CheckRole::class . ':admin'])->group(function () {
-    Route::get('/dashboard-admin', [DashboardController::class, 'overview']);
- 
+    Route::get('/dashboard', [DashboardController::class, 'overview']);
+    Route::post('/logout', [AuthController::class, 'logout']);
+    
     // === KEGIATAN ===
     Route::get('/kegiatan', [KegiatanController::class, 'index']);
     Route::post('/kegiatan', [KegiatanController::class, 'store']);

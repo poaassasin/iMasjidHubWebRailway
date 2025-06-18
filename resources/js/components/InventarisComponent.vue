@@ -191,8 +191,10 @@
   import micIcon from '../assets/icon/mic.png'
   import soundIcon from '../assets/icon/sound.png'
   import profileIcon from '../assets/icon/profile.png'
-  
+  import authMixin from '../mixins/auth';
+
   export default {
+    mixins: [authMixin],
     props: {
         currentPath: {
           type: String,

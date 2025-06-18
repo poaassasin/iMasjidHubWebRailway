@@ -72,8 +72,10 @@
   
   <script>
   import { reactive } from 'vue'
-  
+  import authMixin from '../mixins/auth';
+
   export default {
+    mixins: [authMixin],
     name: 'FormTambahKeluarMasuk',
     setup() {
   

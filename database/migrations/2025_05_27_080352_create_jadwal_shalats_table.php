@@ -11,7 +11,7 @@ return new class extends Migration
      */
     public function up(): void
     {
-      {  Schema::create('jadwal_shalat', function (Blueprint $table) {
+      {  Schema::create('jadwal_shalats', function (Blueprint $table) {
             $table->id();
             $table->string('waktu_shalat'); // subuh, dzuhur, ashar, maghrib, isya
             $table->time('jam');            // contoh: 04:30:00
@@ -28,6 +28,6 @@ return new class extends Migration
      */
     public function down(): void
     {
-        Schema::dropIfExists('jadwal_shalat');
+        Schema::dropIfExists('jadwal_shalats');
     }
 };

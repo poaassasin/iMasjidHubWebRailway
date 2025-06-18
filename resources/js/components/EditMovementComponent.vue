@@ -72,8 +72,10 @@
   
   <script>
   import { reactive, onMounted } from 'vue'
-  
+  import authMixin from '../mixins/auth';
+
   export default {
+    mixins: [authMixin],
     name: 'FormEditKeluarMasuk',
     props: {
     initialMovementId: { // Prop untuk menerima ID dari Blade

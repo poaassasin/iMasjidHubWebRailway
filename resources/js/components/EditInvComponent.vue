@@ -97,9 +97,10 @@
   
   <script>
 import { ref, reactive, onMounted } from 'vue';
-// Hapus import useRoute: import { useRoute } from 'vue-router'
+import authMixin from '../mixins/auth';
 
 export default {
+  mixins: [authMixin],
   name: 'FormEditInventaris', // Pertimbangkan mengganti nama menjadi FormEditInventaris
   props: {
     initialInventoryId: { // Prop untuk menerima ID dari Blade

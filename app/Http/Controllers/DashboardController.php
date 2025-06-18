@@ -20,14 +20,14 @@ class DashboardController extends Controller
             ->get();
 
         // Total pemasukan dan pengeluaran
-        $totalPemasukan = Keuangan::where('jenis', 'pemasukan')->sum('nominal');
-        $totalPengeluaran = Keuangan::where('jenis', 'pengeluaran')->sum('nominal');
+        $totalPemasukan = Keuangan::where('jenis', 'pemasukan')->sum('jumlah');
+        $totalPengeluaran = Keuangan::where('jenis', 'pengeluaran')->sum('jumlah');
 
         // Jadwal Sholat dan Imam hari ini (diasumsikan satu data per hari)
-        $jadwalSholat = JadwalShalat::first(); // atau bisa difilter berdasarkan tanggal
+        $jadwalSholat = JadwalShalat::whereDate('tanggal', Carbon::today())->get(); // atau bisa difilter berdasarkan tanggal
 
         // Permintaan Inventaris hari ini
-        $permintaanHariIni = PermintaanInventaris::whereDate('waktu', Carbon::today())
+        $permintaanHariIni = PermintaanInventaris::whereDate('created_at', Carbon::today())
             ->with('user', 'inventaris')
             ->get();
 

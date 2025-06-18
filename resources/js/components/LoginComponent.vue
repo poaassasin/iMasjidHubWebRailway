@@ -91,20 +91,19 @@ export default {
       this.error = null;
       try {
         // Pastikan URL-nya benar, tidak perlu /api lagi
-        const response = await axios.post('/login', {
+        const response = await axios.post('/api/login', {
           email: this.email,
           password: this.password,
         });
 
-        window.location.href = "/dashboard";
-
-        if (response.data.token) {
-          console.log('Berhasil Match Data')
+        if (response.data && response.data.token) {
+          const token = response.data.token;
+          console.log('Login berhasil, token diterima:', token);
           // 2. Stores the token from the response
-          localStorage.setItem('token', response.data.token);
+          localStorage.setItem('auth_token', token);
 
           // 3. Sets the Authorization header for all future axios requests
-          axios.defaults.headers.common['Authorization'] = `Bearer ${response.data.token}`;
+          axios.defaults.headers.common['Authorization'] = `Bearer ${token}`;
           
           // 4. Redirects to the dashboard using Vue Router
           window.location.href = "/dashboard"
