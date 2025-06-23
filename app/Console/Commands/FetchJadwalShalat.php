@@ -29,50 +29,57 @@ class FetchJadwalShalat extends Command
      */
     public function handle()
     {
-        $idKota = '1634'; // ID Kota Bandung
-        $tanggal = Carbon::today();
-        $tanggalFormatted = $tanggal->format('Y-m-d');
+        $idKota = '1634'; // Ganti dengan ID kota Anda
+        $tanggalHariIni = Carbon::today();
+        $tanggalFormatted = $tanggalHariIni->format('Y-m-d');
 
-        $this->info("Mencoba mengambil jadwal shalat untuk kota ID: {$idKota} pada tanggal: {$tanggalFormatted}");
+        $this->info("Mengambil jadwal untuk tanggal: {$tanggalFormatted} untuk di-update.");
 
         try {
             $response = Http::get("https://api.myquran.com/v2/sholat/jadwal/{$idKota}/{$tanggalFormatted}");
 
             if ($response->successful() && $response->json()['status']) {
                 $jadwalFromApi = $response->json()['data']['jadwal'];
+                $this->info("Berhasil dapat data dari API. Meng-update 5 baris di database...");
 
-                $this->info("Berhasil mendapatkan data dari API. Memproses penyimpanan...");
+                // Daftar nama shalat yang HARUS SAMA PERSIS dengan di database Anda
+                $daftarShalat = ['Subuh', 'Dzuhur', 'Ashar', 'Maghrib', 'Isya'];
 
-                $waktuShalatPenting = ['subuh', 'dzuhur', 'ashar', 'maghrib', 'isya'];
+                // Mapping dari nama di DB ke nama di API (yang huruf kecil)
+                $apiNameMapping = [
+                    'Subuh'   => 'subuh',
+                    'Dzuhur'  => 'dzuhur',
+                    'Ashar'   => 'ashar',
+                    'Maghrib' => 'maghrib',
+                    'Isya'    => 'isya',
+                ];
 
-                foreach ($waktuShalatPenting as $waktu) {
-                    $namaShalat = ucfirst($waktu);
-                    
-                    JadwalShalat::updateOrInsert(
-                        [
-                            'tanggal'      => $tanggal,
-                            'waktu_shalat' => $namaShalat
-                        ],
-                        [
-                            'jam'        => $jadwalFromApi[$waktu] . ':00',
-                        ]
-                    );
+                foreach ($daftarShalat as $namaShalatDiDb) {
+                    $namaShalatDiApi = $apiNameMapping[$namaShalatDiDb];
+                    $waktuShalat = $jadwalFromApi[$namaShalatDiApi];
+
+                    // --- LOGIKA BARU: UPDATE-IN-PLACE ---
+                    // Cari baris berdasarkan 'waktu_shalat', lalu update HANYA jam dan tanggal.
+                    JadwalShalat::where('waktu_shalat', $namaShalatDiDb)
+                        ->update([
+                            'jam' => $waktuShalat . ':00',
+                            'tanggal' => $tanggalHariIni,
+                        ]);
                 }
 
-                $this->info('Jadwal shalat untuk hari ini berhasil disimpan ke database.');
-                Log::info('Jadwal shalat berhasil di-fetch dan disimpan.');
-                return 0;
+                $this->info('5 baris jadwal shalat berhasil di-update.');
+                Log::info('Jadwal shalat berhasil di-update (in-place).');
+                return 0; // Sukses
 
             } else {
                 $this->error('Gagal mengambil data dari API eksternal.');
                 Log::error('Gagal fetch jadwal shalat: ' . $response->body());
-                return 1;
+                return 1; // Error
             }
-
         } catch (\Exception $e) {
             $this->error('Terjadi kesalahan: ' . $e->getMessage());
             Log::error('Exception saat fetch jadwal shalat: ' . $e->getMessage());
-            return 1;
+            return 1; // Error
         }
     }
 }
